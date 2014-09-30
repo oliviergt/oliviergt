@@ -1,3 +1,5 @@
+let mapleader=","
+
 au CursorMoved * checktime
 au FileChangedShell * echohl "Warning: File changed on disk"
 
@@ -14,9 +16,10 @@ set directory=~/.vim/tmp/swap//   " swap files
 
 inoremap <c-u> <esc>viwUea
 
-nnoremap ,ve :e ~/.vimrc<cr>
-nnoremap ,vs :source ~/.vimrc<cr>
-nnoremap ,vn :e ~/secure/notes.txt<cr>
+nnoremap <leader>ve :e ~/.vimrc<cr>
+nnoremap <leader>vc :e ~/github/oliviergt/configs/vim/config.vim<cr>
+nnoremap <leader>vs :source ~/.vimrc<cr>
+nnoremap <leader>vn :e ~/secure/notes.txt<cr>
 nnoremap <c-w><bar> :vsplit <cr>
 
 " Don't move when you use *
