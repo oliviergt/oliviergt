@@ -33,7 +33,14 @@ def Sanitize(line):
   line = re.sub(' +', ' ', line)
   line = re.sub('^ ', '', line)
   line = re.sub(' $', '', line)
-  # line = re.sub(' (' + NOTLET + ')', '\\1', line)
+  line = re.sub('^"', '``', line)
+  line = re.sub(' "', ' ``', line)
+  line = re.sub(u'“', '``', line)
+  # The digit exclusion makes sure that dimensions (in inch) don't get coverted
+  # to quotes. For example: 11" x 8.5".
+  line = re.sub('[^0-9]"$', "''", line)
+  line = re.sub('[^0-9]" ', "'' ", line)
+  line = re.sub(u'”', "''", line)
   return line
 
 def LatexSanitize(line):
@@ -53,7 +60,7 @@ def LatexSanitize(line):
   line = line.replace('^', '\\textasciicircum{}')
   line = line.replace('^', '\\textasciicircum{}')
   line = line.replace('...', '\\ldots{}')
-  line = line.replace(u'\u2026', '\\ldots{}')
+  line = line.replace(u'…', '\\ldots{}')
   return line
 
 
