@@ -32,7 +32,7 @@ nnoremap N Nzzzv
 :nnoremap <F8> a---------- <esc>"=strftime("%a %Y-%b-%d")<CR>pa ----------<CR><esc>
 :inoremap <F8> ---------- <C-R>=strftime("%a %Y-%b-%d")<CR> ----------<CR>
 
-set background=dark
+set background=light
 set pastetoggle=<f12>
 au InsertLeave * set nopaste
 
