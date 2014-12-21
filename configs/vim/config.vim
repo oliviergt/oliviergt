@@ -14,6 +14,9 @@ set undodir=~/.vim/tmp/undo//     " undo files
 set backupdir=~/.vim/tmp/backup// " backups
 set directory=~/.vim/tmp/swap//   " swap files
 
+set expandtab
+set shiftwidth=2
+
 inoremap <c-u> <esc>viwUea
 
 nnoremap <leader>ve :e ~/.vimrc<cr>
