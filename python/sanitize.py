@@ -69,7 +69,7 @@ def NormalizeCombinedCharacters(line):
   return output
 
 
-def main(input_filename, output_filename, width):
+def Main(input_filename, output_filename, width):
   reader = open(input_filename)
   writer = open(output_filename, 'w')
   chars = set()
@@ -116,5 +116,5 @@ if __name__ == '__main__':
   output_filename = args.output
   width = args.width
 
-  main(input_filename, output_filename, width)
+  Main(input_filename, output_filename, width)
 

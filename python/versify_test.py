@@ -32,6 +32,32 @@ class VersifyTestCase(unittest.TestCase):
         versify.GetParagraphs(['', '', 'a', 'b', '', '', 'c', 'd', '', '']),
         [['a', 'b'], ['c', 'd']])
 
+  def testVersifyEmpty(self):
+    begin = '\\begin{verse}'
+    end = '\\end{verse}'
+    self.assertEqual(versify.Versify([]), [])
+    self.assertEqual(versify.Versify([[]]), [])
+
+  def testVersifySingleStanza(self):
+    begin = '\\begin{verse}'
+    end = '\\end{verse}'
+    self.assertEqual(versify.Versify([['a']]), [[begin, 'a', end]])
+    self.assertEqual(
+        versify.Versify([['a', 'b']]), [[begin, 'a', 'b', end]])
+    self.assertEqual(
+        versify.Versify([['a'], ['b']]), [[begin, 'a\\\\', 'b', end]])
+    self.assertEqual(
+        versify.Versify([['a'], ['b', 'c'], ['d']]), 
+         [[begin, 'a\\\\', 'b', 'c\\\\', 'd', end]])
+
+  def testVersifyTwoStanzas(self):
+    begin = '\\begin{verse}'
+    end = '\\end{verse}'
+    self.assertEqual(
+        versify.Versify([['a'], ['~'], ['b']]), [[begin, 'a'], ['b', end]])
+    self.assertEqual(
+        versify.Versify([['a'], ['b'], ['~'], ['c'], ['d']]), 
+        [[begin, 'a\\\\', 'b'], ['c\\\\', 'd', end]])
 
 def suite():
   suite = unittest.makeSuite(VersifyTestCase, 'test')
