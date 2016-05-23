@@ -59,6 +59,9 @@ class FileStats(object):
 class FileStatsRepository(object):
 
   def __init__(self, database_filename):
+    directory, base_name = os.path.split(database_filename)
+    if not os.path.exists(directory):
+      os.makedirs(directory)
     self.connection = sqlite3.connect(database_filename)
 
   def CreateTable(self):
