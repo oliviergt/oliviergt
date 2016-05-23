@@ -72,7 +72,7 @@ for package in GetPackages():
   if version > current_version:
     print 'Keeping %s: a more recent version' % package
     continue
-  prior_packages.add(package)
+  prior_packages.append(package)
   if previous_version is None:
     previous_version = version
   # The previous version is the greatest version before the current one.
@@ -83,11 +83,14 @@ for package in prior_packages:
   if version == previous_version:
     print 'Keeping %s: the previous version' % package
     continue
-  print 'Will remove %s: an older version' % package
-
-  
-
-
-
-
-
+  print 'Removing %s: an older version' % package
+  p = subprocess.Popen(['/usr/bin/sudo',
+                        '/usr/bin/apt-get',
+                        '-y',
+                        'purge',
+                        package],
+                       stdout=subprocess.PIPE, 
+                       stderr=subprocess.PIPE)
+  out, err = p.communicate()
+  print out
+  print err

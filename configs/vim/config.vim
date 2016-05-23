@@ -35,6 +35,10 @@ nnoremap N Nzzzv
 :nnoremap <F8> a---------- <esc>"=strftime("%a %Y-%b-%d")<CR>pa ----------<CR><esc>
 :inoremap <F8> ---------- <C-R>=strftime("%a %Y-%b-%d")<CR> ----------<CR>
 
+nnoremap <silent> <Space> @=(foldlevel('.')?'za':"\<Space>")<CR>
+vnoremap <Space> zf
+hi Visual term=reverse cterm=reverse guibg=Grey
+
 set background=light
 set pastetoggle=<f12>
 au InsertLeave * set nopaste
