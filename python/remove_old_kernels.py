@@ -39,6 +39,14 @@ def GetCurrentKernelRelease():
   return out.strip()
 
 
+class Version(object):
+
+  def __init__(self, version_number, prefix, suffix):
+    self.version_number = version_number
+    self.prefix = prefix
+    self.suffix = suffix
+
+
 def GetVersion(s):
   """Extract version numbers from a string. For example:
   linux-image-3.13.0-70-generic -> [3, 13, 0, 70].
@@ -48,47 +56,79 @@ def GetVersion(s):
   if not match:
     return None
   version_string = match.group(0)
-  version = [int(v) for v in re.split('[.-]', version_string)]
-  if len(version) < 3:
+  prefix = s[:match.start(0)]
+  suffix = s[match.start(0):]
+  version_number = [int(v) for v in re.split('[.-]', version_string)]
+  if len(version_number) < 3:
     # Just a number or two in the package name doesn't make it
-    # a version number.
+    # a version_number.
     return None
-  return version
+  return Version(version_number, prefix, suffix)
 
+
+def SortKey(s):
+  result = GetVersion(s)
+  if not result:
+    return s
+  return result.version_number + [s]
 
 release = GetCurrentKernelRelease()
-current_version = GetVersion(release)
-print 'Current kernel: %s -> %s' % (release, current_version)
-prior_packages = []
-previous_version = None
-for package in GetPackages():
+current_version_number = GetVersion(release).version_number
+print 'Current kernel: %s -> %s' % (release, current_version_number)
+all_packages = [package for package in GetPackages()]
+all_packages.sort(key=SortKey)
+previous_version_number = None
+for package in all_packages:
+  version = GetVersion(package)
+  if not version or version.version_number >= current_version_number:
+    continue
+  if previous_version_number is None:
+    previous_version_number = version.version_number
+  # The previous version is the greatest version before the current one.
+  previous_version_number = max(version.version_number, previous_version_number)
+
+prefix_width = 0
+suffix_width = 0
+for package in all_packages:
   version = GetVersion(package)
   if not version:
-    print 'Keeping %s: no version number' % package
+    prefix_width = max(prefix_width, len(package))
     continue
-  if version == current_version:
-    print 'Keeping %s: the current version' % package
-    continue
-  if version > current_version:
-    print 'Keeping %s: a more recent version' % package
-    continue
-  prior_packages.append(package)
-  if previous_version is None:
-    previous_version = version
-  # The previous version is the greatest version before the current one.
-  previous_version = max(version, previous_version)
+  prefix_width = max(prefix_width, len(version.prefix))
+  suffix_width = max(suffix_width, len(version.suffix))
+  
+format_string = (
+    '[%s] %' + str(prefix_width) + 's%-' + str(suffix_width) + 's: %s')
+print repr(format_string)
+to_remove = []
 
-for package in prior_packages:
+for package in all_packages:
   version = GetVersion(package)
-  if version == previous_version:
-    print 'Keeping %s: the previous version' % package
+  if version:
+    p = version.prefix
+    s = version.suffix
+  else:
+    p = package
+    s = ''
+  if not version:
+    print format_string % (' Keep ', p, s, 'no version number')
     continue
-  print 'Removing %s: an older version' % package
-  p = subprocess.Popen(['/usr/bin/sudo',
-                        '/usr/bin/apt-get',
-                        '-y',
-                        'purge',
-                        package],
+  if version.version_number == current_version_number:
+    print format_string % (' Keep ', p, s, 'the current version')
+    continue
+  if version.version_number > current_version_number:
+    print format_string % (' Keep ', p, s, 'a more recent version')
+    continue
+  if version.version_number == previous_version_number:
+    print format_string % (' Keep ', p, s, 'the previous version')
+    continue
+  print format_string % ('Remove', p, s, 'an older version')
+  to_remove.append(package)
+
+if to_remove:
+  command = ['/usr/bin/sudo', '/usr/bin/apt-get', '-y', 'purge'] + to_remove
+  print 'Running %s' % (' '.join(command))
+  p = subprocess.Popen(command,
                        stdout=subprocess.PIPE, 
                        stderr=subprocess.PIPE)
   out, err = p.communicate()
