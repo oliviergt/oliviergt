@@ -3,28 +3,47 @@
 import os
 import os.path
 import shlex
+import stat
 import subprocess
 import sys
+
+
+RED = '\033[31m'
+BLUE = '\033[34m'
+
+
+
+def Print(color, text):
+  print('%s%s\033[0m' % (color, text))
 
 def CreateDirs(dir_list):
   for path in dir_list:
     path = os.path.expanduser(path)
     if not os.path.exists(path):
-      print('Created directory %s' % path)
+      Print(BLUE, 'Created directory %s' % path)
       os.makedirs(path)
 
 
 def RunCommands(cmd_list):
   for cmd in cmd_list:
     args = [os.path.expanduser(token) for token in shlex.split(cmd)]
-    print('Running command %s'
+    Print(BLUE, 'Running command %s'
           % ' '.join(shlex.quote(token) for token in args))
     subprocess.check_call(args)
     # Will throw on nonzero return code.
 
 
 def Install(package_list):
-  RunCommands(['sudo apt-get install %s' % ' '.join(package_list)])
+  RunCommands(['sudo apt-get --yes install %s' % ' '.join(package_list)])
+
+
+def MakePrivate(path):
+  Print(BLUE, 'Making private %s' % path)
+  for (dirpath, dirnames, filenames) in os.walk(os.path.expanduser(path)):
+    for filename in filenames:
+      fullname = os.path.join(dirpath, filename)
+      print(fullname)
+      os.chmod(fullname, stat.S_IRUSR | stat.S_IWUSR)
 
 
 def EnsureConfigLines(path, config_lines):
@@ -45,7 +64,7 @@ def EnsureConfigLines(path, config_lines):
       if line in present_lines:
         present_lines[line] = True
     f.close()
-  print('Updating config file %s' % path)
+  Print(BLUE, 'Updating config file %s' % path)
   f = open(path, 'w')
   for line in current_content:
     f.write('%s\n' % line)
@@ -55,10 +74,33 @@ def EnsureConfigLines(path, config_lines):
       f.write('%s\n' % line)
   f.close()
 
+
+class Passwords(object):
+
+  def __init__(self):
+    Print(BLUE, 'Reading passwords')
+    self.passwords = {}
+    f = open(os.path.expanduser('~/secret/passwords'))
+    for line in f:
+      line = line.strip()
+      key, password = line.split(':')
+      self.passwords[key.strip()] = password.strip()
+      print(key)
+
+  def Get(self, key):
+    return self.passwords[key]
+
  
 class Setup(object):
-  def __init__(self):
+  def __init__(self, passwords=None):
+    self.passwords = passwords
     os.chdir(os.path.expanduser('~'))
+
+  def AptUpdate(self):
+    RunCommands(['sudo apt-get --yes update'])
+
+  def InstallUtilities(self):
+    Install(['unzip'])
 
   def InstallVim(self):
     CreateDirs([
@@ -89,22 +131,40 @@ class Setup(object):
 
   def InstallSecret(self):
     Install(['gnupg'])
-    RunCommands([
-        'gpg --output ~/secret.tgz -d ~/oliviergt/configs/secret.tgz.gpg',
-        'tar -xzvf ~/secret.tgz',
-        'rm ~/secret.tgz'])
+    if not os.path.exists(os.path.expanduser('~/secret')):
+      RunCommands([
+          'gpg --output ~/secret.tgz -d ~/oliviergt/configs/secret.tgz.gpg',
+          'tar -xzvf ~/secret.tgz',
+          'rm ~/secret.tgz'])
+    MakePrivate('~/secret')
+
 
   def InstallGit(self):
     RunCommands(['cp --no-clobber ~/secret/gitconfig ~/.gitconfig'])
 
+  def InstallVnc(self):
+    Install(['x11vnc', 'xvfb', 'xfce4'])
+    RunCommands(['cp --no-clobber ~/secret/vnc_passwd ~/.vnc/passwd'])
+
+  def RunVnc(self):
+    RunCommands([
+        'Xvfb :0 -ac -screen 0 1024x768x24',
+        'x11vnc -ncache 10 -ncache_cr -display :0 -forever -shared  -bg '
+            + '-noipv6 -rfbauth ~/.vnc/passwd'])
+
   def InstallAll(self):
+    self.InstallUtilities()
     self.InstallVim()
     self.InstallTmux()
     self.InstallBash()
-    self.InstallSecret()
     self.InstallGit()
+    self.InstallVnc()
 
 
 if __name__ == '__main__':
   setup = Setup()
+  setup.AptUpdate()
+  setup.InstallSecret()
+  passwords = Passwords()
+  setup = Setup(passwords)
   setup.InstallAll()

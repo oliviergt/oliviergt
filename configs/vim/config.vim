@@ -15,7 +15,6 @@ set backupdir=~/.vim/tmp/backup// " backups
 set directory=~/.vim/tmp/swap//   " swap files
 
 set expandtab
-set shiftwidth=2
 
 inoremap <c-u> <esc>viwUea
 
@@ -126,3 +125,5 @@ augroup END
 
 " This should be the last line
 filetype plugin indent on
+
+set shiftwidth=2
