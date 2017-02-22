@@ -13,10 +13,18 @@ def GetPackages():
                        stderr=subprocess.PIPE)
   out, err = p.communicate()
 
+  returncode = 0
   if err:
     print 'remove_old_kernels: call to dpkg failed'
     print err
-    sys.exit(1)
+    returncode = 1
+
+  if p.returncode:
+    print 'remove_old_kernels: dpkg returned error code %s' % p.returncode
+    returncode = p.returncode
+
+  if returncode:
+    sys.exit(returncode)
 
   for line in out.split('\n'):
     line = line.strip()
@@ -31,10 +39,18 @@ def GetCurrentKernelRelease():
                        stderr=subprocess.PIPE)
   out, err = p.communicate()
 
+  returncode = 0
   if err:
     print 'remove_old_kernels: call to uname failed'
     print err
-    sys.exit(1)
+    returncode = 1
+
+  if p.returncode:
+    print 'remove_old_kernels: uname returned error code %s' % p.returncode
+    returncode = p.returncode
+
+  if returncode:
+    sys.exit(returncode)
 
   return out.strip()
 
@@ -99,7 +115,6 @@ for package in all_packages:
   
 format_string = (
     '[%s] %' + str(prefix_width) + 's%-' + str(suffix_width) + 's: %s')
-print repr(format_string)
 to_remove = []
 
 for package in all_packages:
@@ -133,4 +148,16 @@ if to_remove:
                        stderr=subprocess.PIPE)
   out, err = p.communicate()
   print out
-  print err
+
+  returncode = 0
+  if err:
+    print 'remove_old_kernels: call to sudo apt-get failed'
+    print err
+    returncode = 1
+
+  if p.returncode:
+    print 'remove_old_kernels: sudo apt-get returned error code %s' % p.returncode
+    returncode = p.returncode
+
+  if returncode:
+    sys.exit(returncode)

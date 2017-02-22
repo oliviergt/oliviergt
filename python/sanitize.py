@@ -72,7 +72,7 @@ def NormalizeCombinedCharacters(line):
   return output
 
 
-def Main(input_filename, output_filename, width):
+def Main(input_filename, output_filename, width, normalize_only):
   reader = open(input_filename)
   writer = open(output_filename, 'w')
   chars = set()
@@ -80,6 +80,9 @@ def Main(input_filename, output_filename, width):
   for line in reader:
     line = line.decode('utf8')
     line = NormalizeCombinedCharacters(line)
+    if normalize_only:
+      writer.write(line.encode('utf8'))
+      continue
     for c in line:
       if not IsLetter(c):
         chars.add(c)
@@ -107,17 +110,20 @@ def Main(input_filename, output_filename, width):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Sanitizes text.')
   parser.add_argument('--input', metavar='input_filename', type=str,
-                             help='input file', required=True)
+                      help='input file', required=True)
   parser.add_argument('--output', metavar='output_filename', type=str,
-                             help='output file', required=True)
+                      help='output file', required=True)
   parser.add_argument('--width', metavar='number_of_columns', type=int,
-                             help='wrap paragraphs to tdis width', default=60)
+                      help='wrap paragraphs to this width', default=60)
+  parser.add_argument('--normalize_only', dest='normalize_only',
+                      action='store_true')
+
   args = parser.parse_args()
   print args
 
   input_filename = args.input
   output_filename = args.output
   width = args.width
+  normalize_only = args.normalize_only
 
-  Main(input_filename, output_filename, width)
-
+  Main(input_filename, output_filename, width, normalize_only)

@@ -151,6 +151,7 @@ class Setup(object):
 
   def InstallVnc(self):
     Install(['x11vnc', 'xvfb', 'xfce4'])
+    CreateDirs(['~/.vnc'])
     RunCommands(['cp --no-clobber ~/secret/vnc_passwd ~/.vnc/passwd'])
 
   def InstallAll(self):

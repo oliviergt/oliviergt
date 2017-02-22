@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from datetime import datetime
 from datetime import timedelta
 import argparse
@@ -16,8 +17,14 @@ MD5SUM = [
   ['md5', '-r'] # BSD-style
 ]
 
+def GetConsoleWidth():
+  tokens = os.popen('stty size', 'r').read().split()
+  if len(tokens) < 2:
+    return None
+  return int(tokens[1])
 
-class Console(object):
+
+class InteractiveConsole(object):
   def __init__(self):
     self.last_refresh_time = time.time()
 
@@ -35,7 +42,7 @@ class Console(object):
     now = time.time()
     if now < self.last_refresh_time + 1:
       return
-    width = self.GetConsoleWidth()
+    width = GetConsoleWidth()
     if len(s) > width:
       b1 = width / 2 - 1
       b2 = b1 + 3 + len(s) - width
@@ -44,8 +51,25 @@ class Console(object):
     sys.stdout.flush()
     self.last_refresh_time = now
 
-  def GetConsoleWidth(self):
-    return int(os.popen('stty size', 'r').read().split()[1])
+
+class RedirectedConsole(object):
+  def __init__(self):
+    self.last_refresh_time = time.time()
+
+  def Print(self, s=''):
+    print '<info> %s' % s
+    self.last_refresh_time = time.time()
+
+  def Error(self, s):
+    print '<error> %s' % s
+    self.last_refresh_time = time.time()
+
+  def Flash(self, s):
+    now = time.time()
+    if now < self.last_refresh_time + 1:
+      return
+    print '%s' % s
+    self.last_refresh_time = now
 
 
 class FileStats(object):
@@ -300,7 +324,10 @@ class Dupes(object):
 
 
 def Main(args):
-  console = Console()
+  if GetConsoleWidth() is None:
+    console = RedirectedConsole()
+  else:
+    console = InteractiveConsole()
   database = os.path.expanduser(args.database)
   repository = FileStatsRepository(database)
   repository.CreateTable()
@@ -315,6 +342,8 @@ def Main(args):
 
 
 if __name__ == "__main__":
+  print 'HOME = %s' % os.environ['HOME']
+  print '~ = %s' % os.path.expanduser('~')
   parser = argparse.ArgumentParser(
       description='Find duplicate files',
       formatter_class=argparse.ArgumentDefaultsHelpFormatter)
