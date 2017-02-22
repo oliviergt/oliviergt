@@ -12,9 +12,9 @@ RED = '\033[31m'
 BLUE = '\033[34m'
 
 
-
 def Print(color, text):
   print('%s%s\033[0m' % (color, text))
+
 
 def CreateDirs(dir_list):
   for path in dir_list:
@@ -94,7 +94,15 @@ class Passwords(object):
 class Setup(object):
   def __init__(self, passwords=None):
     self.passwords = passwords
-    os.chdir(os.path.expanduser('~'))
+    self.home = os.path.expanduser('~')
+    setup_path = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
+    self.abs_git_root = os.path.dirname(setup_path)
+    self.rel_git_root = os.path.join(
+        '~', os.path.relpath(self.abs_git_root, self.home))
+    Print(RED, self.home)
+    Print(RED, self.abs_git_root)
+    Print(RED, self.rel_git_root)
+    os.chdir(self.home)
 
   def AptUpdate(self):
     RunCommands(['sudo apt-get --yes update'])
@@ -115,7 +123,7 @@ class Setup(object):
     EnsureConfigLines(
         '~/.vimrc',
         ['execute pathogen#infect()',
-         'source ~/oliviergt/configs/vim/config.vim'
+         'source %s' % os.path.join(self.rel_git_root, 'configs/vim/config.vim')
         ])
 
   def InstallTmux(self):
