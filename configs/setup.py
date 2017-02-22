@@ -34,7 +34,7 @@ def RunCommands(cmd_list):
 
 
 def Install(package_list):
-  RunCommands(['sudo apt-get --yes install %s' % ' '.join(package_list)])
+  RunCommands(['sudo apt-get -q=2 --yes install %s' % ' '.join(package_list)])
 
 
 def MakePrivate(path):
@@ -96,16 +96,15 @@ class Setup(object):
     self.passwords = passwords
     self.home = os.path.expanduser('~')
     setup_path = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
+    # Absolute path to the git root
+    # (setup.py is in $abs_git_root/configs/setup.py).
     self.abs_git_root = os.path.dirname(setup_path)
+    # Relative path (starting with ~).
     self.rel_git_root = os.path.join(
         '~', os.path.relpath(self.abs_git_root, self.home))
-    Print(RED, self.home)
-    Print(RED, self.abs_git_root)
-    Print(RED, self.rel_git_root)
-    os.chdir(self.home)
 
   def AptUpdate(self):
-    RunCommands(['sudo apt-get --yes update'])
+    RunCommands(['sudo apt-get -q=2 --yes update'])
 
   def InstallUtilities(self):
     Install(['unzip'])
@@ -130,22 +129,22 @@ class Setup(object):
     Install(['tmux'])
     EnsureConfigLines(
         '~/.tmux.conf',
-        ['source-file ~/oliviergt/configs/tmux'])
+        ['source-file %s' % os.path.join(self.rel_git_root, 'configs/tmux')])
 
   def InstallBash(self):
     EnsureConfigLines(
         '~/.bashrc',
-        ['source %s' % os.path.expanduser('~/oliviergt/configs/bash')])
+        ['source %s' % os.path.join(self.abs_git_root, 'configs/bash')])
 
   def InstallSecret(self):
     Install(['gnupg'])
     if not os.path.exists(os.path.expanduser('~/secret')):
       RunCommands([
-          'gpg --output ~/secret.tgz -d ~/oliviergt/configs/secret.tgz.gpg',
-          'tar -xzvf ~/secret.tgz',
+          'gpg --output ~/secret.tgz -d %s' %
+              os.path.join(self.abs_git_root, 'configs/secret.tgz.gpg'),
+          'tar -xzvf ~/secret.tgz --directory ~',
           'rm ~/secret.tgz'])
     MakePrivate('~/secret')
-
 
   def InstallGit(self):
     RunCommands(['cp --no-clobber ~/secret/gitconfig ~/.gitconfig'])
@@ -153,12 +152,6 @@ class Setup(object):
   def InstallVnc(self):
     Install(['x11vnc', 'xvfb', 'xfce4'])
     RunCommands(['cp --no-clobber ~/secret/vnc_passwd ~/.vnc/passwd'])
-
-  def RunVnc(self):
-    RunCommands([
-        'Xvfb :0 -ac -screen 0 1024x768x24',
-        'x11vnc -ncache 10 -ncache_cr -display :0 -forever -shared  -bg '
-            + '-noipv6 -rfbauth ~/.vnc/passwd'])
 
   def InstallAll(self):
     self.InstallUtilities()
