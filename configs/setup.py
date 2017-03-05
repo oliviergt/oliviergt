@@ -107,7 +107,7 @@ class Setup(object):
     RunCommands(['sudo apt-get -q=2 --yes update'])
 
   def InstallUtilities(self):
-    Install(['unzip'])
+    Install(['unzip', 'psmisc'])
 
   def InstallVim(self):
     CreateDirs([
@@ -150,9 +150,33 @@ class Setup(object):
     RunCommands(['cp --no-clobber ~/secret/gitconfig ~/.gitconfig'])
 
   def InstallVnc(self):
-    Install(['x11vnc', 'xvfb', 'xfce4'])
+    Install(['x11vnc', 'xvfb', 'xfce4', 'krdc', 'midori', 'evince'])
     CreateDirs(['~/.vnc'])
     RunCommands(['cp --no-clobber ~/secret/vnc_passwd ~/.vnc/passwd'])
+
+  def InstallTws(self):
+    name = 'tws-latest-standalone-linux-x64.sh'
+    install_dir = '~/installers'
+    destination = os.path.join(install_dir, name)
+    CreateDirs([install_dir])
+    if not os.path.exists(destination):
+      RunCommands([
+          'curl -Sso %s https://download2.interactivebrokers.com/installers/'
+              'tws/latest-standalone/%s' % (destination, name),
+          'chmod u+x %s' % destination])
+
+  def InstallIbController(self):
+    name = 'IBController-3.2.0.zip'
+    install_dir = '~/installers'
+    ibcontroller_dir = '~/ibcontroller'
+    zip_path = os.path.join(install_dir, name)
+    CreateDirs([install_dir, ibcontroller_dir])
+    if not os.path.exists(zip_path):
+      RunCommands([
+          'curl -LSso %s https://github.com/ib-controller/ib-controller/'
+              'releases/download/3.2.0/%s' % (zip_path, name)])
+    RunCommands(['unzip %s  -d %s' % (zip_path, ibcontroller_dir)])
+    
 
   def InstallAll(self):
     self.InstallUtilities()
@@ -161,6 +185,8 @@ class Setup(object):
     self.InstallBash()
     self.InstallGit()
     self.InstallVnc()
+    self.InstallTws()
+    self.InstallIbController()
 
 
 if __name__ == '__main__':
