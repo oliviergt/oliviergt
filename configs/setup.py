@@ -177,6 +177,28 @@ class Setup(object):
               'releases/download/3.2.0/%s' % (zip_path, name)])
     RunCommands(['unzip %s  -d %s' % (zip_path, ibcontroller_dir)])
     
+  def InstallAddAptRepository(self):
+    """Install the add-apt-repository command-line tool."""
+    RunCommands(['sudo apt-get install software-properties-common'])
+
+  def InstallJava8(self):
+    RunCommands([
+        'sudo add-apt-repository ppa:webupd8team/java',
+        'sudo apt-get update',
+        'sudo apt-get install oracle-java8-installer'])
+
+  def InstallBazel(self):
+    bazel_key = 'bazel-release.pub.gpg'
+    bazel_key_path = os.path.join('~/installers', bazel_key)
+    bazel_list_src = os.path.join(self.abs_git_root, 'configs/bazel.list')
+    RunCommands(
+        ['sudo cp %s /etc/apt/sources.list.d/bazel.list' % bazel_list_src,
+         'curl -LSso %s https://bazel.build/%s' % (
+             bazel_key_path, bazel_key),
+         'sudo apt-key add %s' % bazel_key_path,
+         'sudo apt-get update',
+         'sudo apt-get install bazel',
+         'sudo apt-get upgrade bazel'])
 
   def InstallAll(self):
     self.InstallUtilities()
@@ -184,6 +206,9 @@ class Setup(object):
     self.InstallTmux()
     self.InstallBash()
     self.InstallGit()
+    self.InstallAddAptRepository()
+    self.InstallJava8()
+    self.InstallBazel()
     self.InstallVnc()
     self.InstallTws()
     self.InstallIbController()
