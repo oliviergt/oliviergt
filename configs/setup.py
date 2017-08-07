@@ -182,6 +182,7 @@ class Setup(object):
     RunCommands(['sudo apt-get install software-properties-common'])
 
   def InstallJava8(self):
+    """This works for ubuntu but not debian."""
     RunCommands([
         'sudo add-apt-repository ppa:webupd8team/java',
         'sudo apt-get update',
