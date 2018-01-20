@@ -157,6 +157,16 @@ class FileStatsRepository(object):
   def MakeFileStats(self, row):
     return FileStats(row[0], row[1], row[2], row[3], row[4])
 
+  def FilePathMatch(self, name_like):
+    cursor = self.connection.cursor()
+    cursor.execute(
+        'SELECT * FROM file_stats WHERE path || "/" || base_name LIKE ?',
+        (name_like,))
+    result = []
+    for row in cursor.fetchall():
+      result.append(self.MakeFileStats(row))
+    return result
+
 
 def Call(args):
   process = subprocess.Popen(
@@ -322,6 +332,13 @@ class Dupes(object):
         other_file_stats.GetPath(), other_file_stats.GetBaseName()))
     self.console.Print()
 
+  def NameLike(self, name_like):
+    matches = self.repository.FilePathMatch(name_like)
+    for file_stats in matches:
+      self.console.Print(os.path.join(
+        file_stats.GetPath(), file_stats.GetBaseName()))
+    self.console.Print()
+
 
 def Main(args):
   if GetConsoleWidth() is None:
@@ -337,6 +354,8 @@ def Main(args):
     dupes.HashPathsToDatabase(args.hash_to_database)
   if args.lookup:
     dupes.Lookup(args.lookup)
+  if args.name_like:
+    dupes.NameLike(args.name_like)
   repository.Close()
   console.Print('Updates saved to %s' % database)
 
@@ -356,5 +375,10 @@ if __name__ == "__main__":
   parser.add_argument('--lookup', metavar='path', nargs='*',
       help='a search path that should be explored; all files that match the '
       'hashes and sizes from the search path will be returned')
+  parser.add_argument('--name_like', metavar='like_clause', nargs='?',
+      help='find all files in repository whose full path matches the given '
+      'sql LIKE clause; the search is not case-sensitive. There are two '
+      'wildcard characters: the percent sign % represents zero, one or more '
+      'characters, whereas the underscore _ reperesents a single character.')
   
   Main(parser.parse_args())
