@@ -62,7 +62,6 @@ set -g message-attr bright
 # Status line left side
 set -g status-left-length 40
 set -g status-left "#[fg=yellow]#S.#I.#P"
-set -g status-utf8 on
 # Status line right side
 # 15% | 28 Nov 18:15
 set -g status-right "#(~/battery Discharging) | #[fg=white]%d %b %R"
