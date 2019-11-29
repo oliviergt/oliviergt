@@ -245,7 +245,8 @@ class TreeWalker(object):
     ----------
     paths : list of str
         Each entry can be a file or a directory. Directories will be explored
-        recusively and expanded into files.
+        recursively and expanded into files. If a path does not exist, it will
+        be skipped (an error will be displayed).
     name: str
         Name of the operation, for the progress indicator.
     callback: function
@@ -257,37 +258,43 @@ class TreeWalker(object):
     files = []
     directories = set()
     for path_argument in paths:
+      if not os.path.exists(path_argument):
+        self.console.Error('Path %s does not exist' % path_argument)
+        continue
       if not os.path.isdir(path_argument):
         files.append(path_argument)  # TODO: Do the counting right here.
-      else:
-        for root, folders, regular_files in os.walk(path_argument, topdown=False):
-          for filename in regular_files:
-            filename = self.MakeAcceptableFile(os.path.join(root, filename))
-            if filename:
-              files.append(filename)
-              directories.add(root)
-              self.console.Flash('%s: %d files, %d directories: %s' % (
+        continue
+      for root, folders, regular_files in os.walk(path_argument, topdown=False):
+        for filename in regular_files:
+          filename = self.MakeAcceptableFile(os.path.join(root, filename))
+          if filename:
+            files.append(filename)
+            directories.add(root)
+            self.console.Flash('%s: %d files, %d directories: %s' % (
                 name, len(files), len(directories), root))
 
     # Second pass: actual processing.
     processed_directories = set()
     file_count = 0
     for path_argument in paths:
+      if not os.path.exists(path_argument):
+        # Error was already printed above.
+        continue
       if not os.path.isdir(path_argument):
         filename = self.MakeAcceptableFile(path_argument)
         if filename:
           callback(filename)  # TODO: Do the counting right here.
-      else:
-        for root, folders, regular_files in os.walk(path_argument, topdown=False):
-          for filename in regular_files:
-            filename = self.MakeAcceptableFile(os.path.join(root, filename))
-            if filename:
-              file_count += 1
-              self.console.Flash('%s: file %d/%d, directory %d/%d: %s' % (
+        continue
+      for root, folders, regular_files in os.walk(path_argument, topdown=False):
+        for filename in regular_files:
+          filename = self.MakeAcceptableFile(os.path.join(root, filename))
+          if filename:
+            file_count += 1
+            self.console.Flash('%s: file %d/%d, directory %d/%d: %s' % (
                 name, file_count, len(files), len(processed_directories),
                 len(directories), root))
-              callback(filename)
-              processed_directories.add(root)
+            callback(filename)
+            processed_directories.add(root)
 
 
 class Dupes(object):
@@ -379,6 +386,6 @@ if __name__ == "__main__":
       help='find all files in repository whose full path matches the given '
       'sql LIKE clause; the search is not case-sensitive. There are two '
       'wildcard characters: the percent sign % represents zero, one or more '
-      'characters, whereas the underscore _ reperesents a single character.')
+      'characters, whereas the underscore _ represents a single character.')
   
   Main(parser.parse_args())

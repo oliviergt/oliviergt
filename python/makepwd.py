@@ -27,4 +27,4 @@ def GetRandomPassword():
 
 
 for j in xrange(100):
-  print GetRandomPassword()
+  print(GetRandomPassword())

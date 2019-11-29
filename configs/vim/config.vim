@@ -1,5 +1,7 @@
 let mapleader=","
 
+set shiftwidth=2
+
 au CursorMoved * checktime
 au FileChangedShell * echohl "Warning: File changed on disk"
 
@@ -125,5 +127,3 @@ augroup END
 
 " This should be the last line
 filetype plugin indent on
-
-set shiftwidth=2
